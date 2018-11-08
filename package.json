@@ -1,0 +1,29 @@
+{
+  "name": "maybetracer",
+  "version": "1.0.0",
+  "description": "A dumb C++ and Rust instrumenter. \"Maybe I'll be Tracer. I'm already Tracer.\"",
+  "main": "index.js",
+  "author": "Victor Porof <victor.porof@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "babel-node index.js"
+  },
+  "dependencies": {
+    "find": "^0.2.9",
+    "jsonpath": "^1.0.0",
+    "lodash": "^4.17.11",
+    "mustache": "^3.0.0",
+    "temp": "^0.8.3",
+    "yargs": "^12.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.5",
+    "@babel/node": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/preset-env": "^7.1.5",
+    "babel-eslint": "8",
+    "eslint": "^5.8.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0"
+  }
+}
