@@ -4,21 +4,22 @@ import jsonpath from 'jsonpath';
 import flatten from 'lodash/flatten';
 
 import BaseTracer from './base-instrumenter';
-import { read, spawn } from './util';
+import { spawn } from './util-cp';
+import { read } from './util-fs';
 
 export default class extends BaseTracer {
-  instrumentation = 'println!("{{{prefix}}} {{{path}}} {{{name}}} {{{suffix}}}");'
+  instrumentation = 'println!("{{{prefix}}} {{{file}}} {{{name}}} {{{suffix}}}");'
 
-  async load(path) {
-    const content = await read(path, { encoding: 'utf-8' });
-    return { path, content };
+  async load(file) {
+    const content = await read(file, { encoding: 'utf-8' });
+    return { file, content };
   }
 
-  async parse({ path, content }) {
+  async parse({ file, content }) {
     const ast = JSON.parse(await spawn('rustc', [
       '-Z',
       'ast-json-noexpand',
-      path,
+      file,
     ]));
 
     const fns = jsonpath.query(ast, '$..*[?(@.node.variant=="Fn")]');
@@ -53,7 +54,7 @@ export default class extends BaseTracer {
     return [...functions, ...methods].sort((a, b) => b.span.lo - a.span.lo);
   }
 
-  inject(data, span, str) {
+  inject(data, { span }, str) {
     const before = data.content.substring(0, span.lo + 1);
     const after = data.content.substring(span.lo + 1);
     // eslint-disable-next-line no-param-reassign

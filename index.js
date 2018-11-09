@@ -1,8 +1,8 @@
-/* eslint-disable no-console */
 import find from 'find';
 import yargs from 'yargs';
 
-import { lstat } from './src/util';
+import * as logging from './src/util-logging';
+import { lstat } from './src/util-fs';
 import RustInstrumenter from './src/rust-instrumenter';
 import CppInstrumenter from './src/cpp-instrumenter';
 
@@ -10,10 +10,21 @@ const CPP_RE = /\.(h|hpp|cpp)$/;
 const RUST_RE = /\.(rs)$/;
 
 const { argv } = yargs
+  .option('clang', {
+    demandOption: true,
+    describe: 'Path for clang-check',
+    type: 'string',
+    default: '/usr/local/opt/llvm/bin/clang-check',
+  })
   .option('path', {
     demandOption: true,
-    describe: 'Path the root directory or file to instrument',
+    describe: 'Path to the directory or file to instrument',
     type: 'string',
+  })
+  .option('rel', {
+    describe: 'Path to a root directory to relate paths to',
+    type: 'string',
+    default: '/',
   })
   .option('exclude', {
     alias: 'skip',
@@ -42,37 +53,47 @@ const run = async (file, options) => {
   if (file.match(CPP_RE)) {
     if (argv.exclude && file.match(exclude)) {
       if (!options.silent) {
-        console.info('Skipping', file);
+        logging.info('Skipping', file);
       }
     } else {
       if (!options.silent) {
-        console.info('Found', file);
+        logging.info('Found', file);
       }
-      const cpp = new CppInstrumenter();
-      const altered = await cpp.instrument(file, { overwrite: !options.dry });
-      if (!options.silent) {
-        console.info('Instrumented', file);
-      }
-      if (options.verbose) {
-        console.info(altered);
+      try {
+        const cpp = new CppInstrumenter(options);
+        const altered = await cpp.instrument(file, { overwrite: !options.dry });
+        if (!options.silent) {
+          logging.info('Instrumented', file);
+        }
+        if (options.verbose) {
+          logging.log(altered);
+        }
+      } catch (e) {
+        logging.error('Failed', file);
+        logging.error(e);
       }
     }
   } else if (file.match(RUST_RE)) {
     if (argv.exclude && file.match(exclude)) {
       if (!options.silent) {
-        console.info('Skipping', file);
+        logging.info('Skipping', file);
       }
     } else {
       if (!options.silent) {
-        console.info('Found', file);
+        logging.info('Found', file);
       }
-      const rs = new RustInstrumenter();
-      const altered = await rs.instrument(file, { overwrite: !options.dry });
-      if (!options.silent) {
-        console.info('Instrumented', file);
-      }
-      if (options.verbose) {
-        console.info(altered);
+      try {
+        const rs = new RustInstrumenter(options);
+        const altered = await rs.instrument(file, { overwrite: !options.dry });
+        if (!options.silent) {
+          logging.info('Instrumented', file);
+        }
+        if (options.verbose) {
+          logging.log(altered);
+        }
+      } catch (e) {
+        logging.error('Failed', file);
+        logging.error(e);
       }
     }
   }

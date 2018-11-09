@@ -1,28 +1,35 @@
+import path from 'path';
+
 import mustache from 'mustache';
 
-import { write } from './util';
+import { write } from './util-fs';
 
 export default class {
   prefix = '@@['
 
   suffix = ']@@'
 
-  async instrument(path, { overwrite = false } = {}) {
-    const data = await this.load(path);
+  constructor(options) {
+    this.options = options;
+  }
+
+  async instrument(file, { overwrite = false } = {}) {
+    const relative = path.relative(this.options.rel, file);
+    const data = await this.load(file);
     const nodes = await this.parse(data);
 
-    nodes.forEach(({ name, span }) => {
-      this.inject(data, span, mustache.render(this.instrumentation, {
+    nodes.forEach((node) => {
+      this.inject(data, node, mustache.render(this.instrumentation, {
         prefix: this.prefix,
         suffix: this.suffix,
-        path,
-        name,
+        name: node.name,
+        file: relative,
       }));
     });
 
     const flushed = this.flush(data);
     if (overwrite) {
-      await write(path, flushed);
+      await write(file, flushed);
     }
 
     return flushed;
